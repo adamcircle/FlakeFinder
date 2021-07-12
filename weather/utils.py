@@ -55,11 +55,32 @@ def get_forecast(lat, lon):
 
 
 def get_snow_data(forecast_json):
-    pass
+    """
+    Return only data about the times when snow is predicted
+    :param forecast_json: a parsed json forecast from OWM
+    :return: If no snow, None; if snow, a list of dictionaries of OWM data
+    """
+    snow_data = []
+    for datapoint in forecast_json["list"]:
+        if "snow" in datapoint:
+            snow_data.append(datapoint)
+    if len(snow_data) > 0:
+        return snow_data
+    return None
 
 
 def parse_forecast():
     pass
+
+
+def check_valid_coords(lat, lon):
+    try:
+        lat, lon = float(lat), float(lon)
+        assert -90.0 <= lat <= 90.0
+        assert -180.0 <= lon <= 180.0
+    except ValueError as err:
+        print("Invalid lat, lon value:", err)
+    return lat, lon
 
 
 def parse_sounding(url):
@@ -68,7 +89,6 @@ def parse_sounding(url):
     :param url: String
     :return: Dataframe, sounding
     """
-    # url = "https://rucsoundings.noaa.gov/get_soundings.cgi?data_source=Op40&latest=latest&start_year=2021&start_month_name=Jul&start_mday=10&start_hour=2&start_min=0&n_hrs=1.0&fcst_len=8&airport=36.77%2C-119.72&text=Ascii%20text%20%28GSL%20format%29&hydrometeors=false&start=latest"
     file = io.StringIO(requests.get(url).text)
     # with open("weather/sounding_example.txt", "r") as f:
     # print(f.readline())
