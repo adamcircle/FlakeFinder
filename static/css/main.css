@@ -1,0 +1,22 @@
+#searchBar {
+    margin: 20px auto;
+    text-align: center;
+}
+
+body {
+    background: #46bcec;
+}
+
+h1 {
+    padding-top: 1em;
+    font-size: 4em !important;
+    padding-bottom: 0.4em !important;
+    margin-bottom: 0 !important;
+    color: white;
+    text-align: center;
+}
+
+#desc {
+    color: white;
+    text-align: center;
+}
