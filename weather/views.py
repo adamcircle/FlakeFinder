@@ -25,3 +25,7 @@ def forecast(request, lat, lon):
     snow = get_snow_data(f)
     if snow is None:
         return HttpResponse("Hello world.")
+
+
+def random(request):
+    pass

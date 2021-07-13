@@ -1,4 +1,3 @@
-import pprint
 from datetime import datetime
 import requests
 from FlakeFinder.secrets import OWM_KEY
