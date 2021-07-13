@@ -1,10 +1,5 @@
-from django.shortcuts import render
-
 # Create your views here.
 from django.http import HttpResponse
-from django import forms
-import requests
-from .models import Soundings
 from django.template import loader
 from weather.utils import *
 from django.conf import settings
