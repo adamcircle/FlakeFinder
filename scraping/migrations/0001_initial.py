@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -12,17 +11,14 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Soundings',
+            name='SnowLocation',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True,
                                         serialize=False, verbose_name='ID')),
-                ('latitude',
-                 models.DecimalField(decimal_places=2, max_digits=5)),
-                ('longitude',
-                 models.DecimalField(decimal_places=2, max_digits=5)),
-                ('temp', models.DecimalField(decimal_places=1, max_digits=4)),
-                ('dewpt', models.DecimalField(decimal_places=1, max_digits=4)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('lat', models.DecimalField(decimal_places=4, max_digits=6)),
+                ('lng', models.DecimalField(decimal_places=4, max_digits=7)),
+                ('name', models.CharField(max_length=255)),
+                ('snow_now', models.BooleanField(default=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],
         ),
