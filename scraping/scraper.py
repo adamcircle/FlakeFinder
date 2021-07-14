@@ -20,7 +20,7 @@ def scrape_snow_locs():
     locs = []
 
     soup = BeautifulSoup(page.content, "html.parser")
-    table_title = soup.find(text="Fresh Snow Depth")
+    table_title = soup.find(text="New snow in next 3 days")
     table = table_title.parent.parent
     links = table.find_all("a")
     flags = table.find_all("i")
