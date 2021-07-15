@@ -6,6 +6,7 @@ from weather.utils import *
 from django.conf import settings
 from scraping.models import SnowLocation
 from random import choice
+from FlakeFinder.secrets import GOOGLE_MAPS_KEY
 
 
 def index(request):
