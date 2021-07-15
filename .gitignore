@@ -1,4 +1,4 @@
 /.idea/
-/FlakeFinder/secrets.py
 /weather/sounding_example.txt
 /weather/weather_example.txt
+/FlakeFinder/unified_secrets.py

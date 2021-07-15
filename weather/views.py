@@ -15,7 +15,7 @@ def index(request):
     # random_item = choice(query)
     random_item = {"lat": 12.78, "lng": -12.45, "name": "Puero Rico"}
     context = {
-        'api_key': settings.GOOGLE_MAPS_KEY,
+        'api_key': GOOGLE_MAPS_KEY,
         'lat': random_item["lat"],
         'lng': random_item["lng"],
         'name': random_item["name"]
