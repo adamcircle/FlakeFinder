@@ -12,7 +12,8 @@ def index(request):
     template = loader.get_template('weather/index.html')
     cutoff = datetime.now() - timedelta(hours=3)
     query = SnowLocation.objects.filter(snow_now=True, updated_at__gt=cutoff)
-    random_item = choice(query)
+    # random_item = choice(query)
+    random_item = {"lat": 12.78, "lng": -12.45, "name": "Puero Rico"}
     context = {
         'api_key': settings.GOOGLE_MAPS_KEY,
         'lat': random_item["lat"],
@@ -32,9 +33,9 @@ def forecast(request, lat, lon):
 
 
 def random(request):
-    query = SnowLocation.objects.filter(snow_now=True,
-                                        updated_at__gt=datetime.now() - \
-                                                       datetime.timedelta(
-                                                           hours=3))
-    random_item = choice(query)
-    forecast(request, random_item["lat"], random_item["lng"])
+    pass
+    # query = SnowLocation.objects.filter(snow_now=True,
+    #                                     updated_at__gt=datetime.now() - \
+    #                                     timedelta(hours=3))
+    # random_item = choice(query)
+    # forecast(request, random_item["lat"], random_item["lng"])
