@@ -4,6 +4,7 @@ from FlakeFinder.secrets import OWM_KEY
 import pandas as pd
 import io
 import json
+import numpy as np
 
 
 def get_sounding_url(lat, lon, time):
@@ -107,20 +108,28 @@ def get_snow_layer(df):
     :param df: The sounding dataframe
     :return: A dataframe containing only the snow layer
     """
-    surface_pressure = df["Pressure"][0]
-    layer_bottom_pressure = 0
-    layer_bottom_idx = 0
-    flag = False
-    for idx, row in df[df["Pressure"] < surface_pressure - 200].itertuples():
-        if row["Temp"] - row["Dew_pt"] <= 1.0 and flag is False:
-            layer_bottom_pressure = row["Pressure"]
-            layer_bottom_idx = idx
-            flag = True
-        if row["Temp"] - row["Dew_pt"] > 1.0 and flag is True:
-            if row["Pressure"] - layer_bottom_pressure > 100:
-                return df[layer_bottom_idx:idx - 1]
-            flag = False
-    return None
+    # Credit to BENY: https://stackoverflow.com/a/68430627/1917407
+
+    # Ensure pressure is at least 200mb less than surface pressure
+    cond1 = df.Pressure.sub(
+        df.Pressure.iloc[df.Pressure.first_valid_index()]
+    ) <= -200
+
+    # Ensure supersaturation
+    cond2 = df.Temp - df.Dew_pt <= 1.0
+
+    # Merge the conditions into a truth table
+    conditions = (~(cond1 & cond2)).cumsum()
+
+    # Group data
+    grouped_pressure_diff = df.groupby(conditions).Pressure.agg(np.ptp)
+
+    # Ensure snow layer is at least 200mb in altitude
+    snow_layer = df[conditions.isin(
+        grouped_pressure_diff[grouped_pressure_diff > 200].index
+    )].iloc[1:, ]
+
+    return snow_layer
 
 
 def predict_snowflake_shape(df):
