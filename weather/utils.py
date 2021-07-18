@@ -45,7 +45,6 @@ def get_forecast(lat, lon):
     :param lon: Longitude
     :return: dict, parsed json forecast
     """
-
     url = f"https://api.openweathermap.org/data/2.5/forecast?" \
           f"lat={lat}&lon={lon}&appid={OWM_KEY}&units=metric"
     data = requests.get(url).text
@@ -53,23 +52,17 @@ def get_forecast(lat, lon):
     return parsed
 
 
-def get_snow_data(forecast_json):
+def get_snow_times(json):
     """
-    Return only data about the times when snow is predicted
-    :param forecast_json: a parsed json forecast from OWM
-    :return: If no snow, None; if snow, a list of dictionaries of OWM data
+    Determine the times, in seconds since the epoch, when OWM predicts snow
+    :param json: the json response from OWM
+    :return: A list of times
     """
-    snow_data = []
-    for datapoint in forecast_json["list"]:
-        if "snow" in datapoint:
-            snow_data.append(datapoint)
-    if len(snow_data) > 0:
-        return snow_data
-    return None
-
-
-def parse_forecast():
-    pass
+    times = []
+    for period in json["list"]:
+        if "snow" in period:
+            times.append((period["dt"], period["pop"]))
+    return times
 
 
 def check_valid_coords(lat, lon):
@@ -91,8 +84,8 @@ def parse_sounding(url):
     file = io.StringIO(requests.get(url).text)
     # with open("weather/sounding_example.txt", "r") as f:
     # print(f.readline())
-    col_names = ("Type", "Pressure", "Height",
-                 "Temp", "Dewpt", "WindDir", "WindSpd")
+    col_names = ("Type", "Pressure", "Altitude",
+                 "Temp", "Dew_pt", "WindDir", "WindSpd")
     sounding = pd.read_csv(file,
                            skiprows=7,
                            header=None,
@@ -104,4 +97,32 @@ def parse_sounding(url):
                            na_values="99999")
     sounding['Temp'] = sounding['Temp'].map(lambda temp: temp / 10)
     sounding['Dew_pt'] = sounding['Dew_pt'].map(lambda dew_pt: dew_pt / 10)
-    return sounding
+    return sounding.iloc[:, [0, 1, 2, 3, 4]]  # strip the wind data
+
+
+def get_snow_layer(df):
+    """
+    Identifies the first range of sounding data which meets the criteria for a
+    snow formation layer.
+    :param df: The sounding dataframe
+    :return: A dataframe containing only the snow layer
+    """
+    surface_pressure = df["Pressure"][0]
+    layer_bottom_pressure = 0
+    layer_bottom_idx = 0
+    flag = False
+    for idx, row in df[df["Pressure"] < surface_pressure - 200].itertuples():
+        if row["Temp"] - row["Dew_pt"] <= 1.0 and flag is False:
+            layer_bottom_pressure = row["Pressure"]
+            layer_bottom_idx = idx
+            flag = True
+        if row["Temp"] - row["Dew_pt"] > 1.0 and flag is True:
+            if row["Pressure"] - layer_bottom_pressure > 100:
+                return df[layer_bottom_idx:idx - 1]
+            flag = False
+    return None
+
+
+def predict_snowflake_shape(df):
+    prediction_line = df[0]
+    pass
