@@ -5,6 +5,8 @@ import pandas as pd
 import io
 import json
 import numpy as np
+from shapely.geometry import Point
+import pickle
 
 
 def get_sounding_url(lat, lon, time):
@@ -12,22 +14,19 @@ def get_sounding_url(lat, lon, time):
     Gets the url for the sounding at the specified place and time
     :param lat: Latitude
     :param lon: Longitude
+    :param time: Seconds since the epoch
     :return: String, url
     """
-    now = datetime.now()
-    year = now.year
-    month = now.strftime('%B')[:3]
-    day = now.day
-    hour = now.hour
-    lat = round(lat, 2)
-    lon = round(lon, 2)
+    dt = datetime.fromtimestamp(time)
+    lat = round(lat, 3)
+    lon = round(lon, 3)
     url = f"https://rucsoundings.noaa.gov/get_soundings.cgi?" \
           f"data_source=Op40" \
           f"&latest=latest" \
-          f"&start_year={year}" \
-          f"&start_month_name={month}" \
-          f"&start_mday={day}" \
-          f"&start_hour={hour}" \
+          f"&start_year={dt.year}" \
+          f"&start_month_name={dt.strftime('%B')[:3]}" \
+          f"&start_mday={dt.day}" \
+          f"&start_hour={dt.hour}" \
           f"&start_min=0" \
           f"&n_hrs=1.0" \
           f"&fcst_len=shortest" \
@@ -108,7 +107,7 @@ def get_snow_layer(df):
     :param df: The sounding dataframe
     :return: A dataframe containing only the snow layer
     """
-    # Credit to BENY: https://stackoverflow.com/a/68430627/1917407
+    # Credit to BENY: https://stackoverflow.com/a/68430627
 
     # Ensure pressure is at least 200mb less than surface pressure
     cond1 = df.Pressure.sub(
@@ -135,3 +134,11 @@ def get_snow_layer(df):
 def predict_snowflake_shape(df):
     prediction_line = df[0]
     pass
+
+
+def check_in_conus(lat, lon):
+    path = "weather/usa.pickle"
+    with open(path, "rb") as poly_file:
+        usa = pickle.load(poly_file)
+        point = Point(lon, lat)
+        return usa.contains(point)
