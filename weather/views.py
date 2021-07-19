@@ -8,7 +8,6 @@ from weather.utils import *
 from django.conf import settings
 from scraping.models import SnowLocation
 from random import choice
-import numpy as np
 from FlakeFinder.secrets import GOOGLE_MAPS_KEY
 
 
@@ -30,16 +29,25 @@ def index(request):
 def forecast(request, lat, lon):
     lat, lon = check_valid_coords(lat, lon)
 
+    if check_in_conus(lat, lon):
+        conus = True
+    else:
+        conus = False
+
     f = get_forecast(lat, lon)
     snow_times = get_snow_times(f)
     if len(snow_times) == 0:
         return HttpResponse("No snow!")
+
     flakes = []
     for time in snow_times:
-        url = get_sounding_url(lat, lon, time)
-        sounding = requests.get(url).text
-        sounding_df = parse_sounding(sounding)
-        layer_df = get_snow_layer(sounding_df)
+        url = get_sounding_url(lat, lon, time, conus)
+        sounding = parse_sounding(url)
+
+        if sounding is None:
+            return HttpResponse("No data!")
+
+        layer_df = get_snow_layer(sounding)
         predict_snowflake_shape(layer_df)
 
 

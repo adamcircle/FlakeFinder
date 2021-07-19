@@ -9,20 +9,24 @@ from shapely.geometry import Point
 import pickle
 
 
-def get_sounding_url(lat, lon, time):
+def get_sounding_url(lat, lon, time, conus=True):
     """
     Gets the url for the sounding at the specified place and time
     :param lat: Latitude
     :param lon: Longitude
     :param time: Seconds since the epoch
+    :param conus: True for OP40 or False for GFS model
     :return: String, url
     """
+    if conus:
+        model = "Op40"
+    else:
+        model = "GFS"
     dt = datetime.fromtimestamp(time)
     lat = round(lat, 3)
     lon = round(lon, 3)
     url = f"https://rucsoundings.noaa.gov/get_soundings.cgi?" \
-          f"data_source=Op40" \
-          f"&latest=latest" \
+          f"data_source={model}" \
           f"&start_year={dt.year}" \
           f"&start_month_name={dt.strftime('%B')[:3]}" \
           f"&start_mday={dt.day}" \
@@ -52,14 +56,14 @@ def get_forecast(lat, lon):
     return parsed
 
 
-def get_snow_times(json):
+def get_snow_times(jso):
     """
     Determine the times, in seconds since the epoch, when OWM predicts snow
-    :param json: the json response from OWM
+    :param jso: the json response from OWM
     :return: A list of times
     """
     times = []
-    for period in json["list"]:
+    for period in jso["list"]:
         if "snow" in period:
             times.append((period["dt"], period["pop"]))
     return times
@@ -81,13 +85,16 @@ def parse_sounding(url):
     :param url: String
     :return: Dataframe, sounding
     """
-    file = io.StringIO(requests.get(url).text)
+    resp = requests.get(url)
+    if not resp.ok:
+        return None
+    file = io.StringIO(resp.text)
     # with open("weather/sounding_example.txt", "r") as f:
     # print(f.readline())
     col_names = ("Type", "Pressure", "Altitude",
                  "Temp", "Dew_pt", "WindDir", "WindSpd")
     sounding = pd.read_csv(file,
-                           skiprows=7,
+                           skiprows=6,
                            header=None,
                            names=col_names,
                            delimiter=' ',
@@ -95,6 +102,8 @@ def parse_sounding(url):
                            error_bad_lines=False,
                            keep_default_na=False,
                            na_values="99999")
+    if sounding.Pressure.iloc[0] == 0:
+        return None
     sounding['Temp'] = sounding['Temp'].map(lambda temp: temp / 10)
     sounding['Dew_pt'] = sounding['Dew_pt'].map(lambda dew_pt: dew_pt / 10)
     return sounding.iloc[:, [0, 1, 2, 3, 4]]  # strip the wind data
@@ -110,9 +119,7 @@ def get_snow_layer(df):
     # Credit to BENY: https://stackoverflow.com/a/68430627
 
     # Ensure pressure is at least 200mb less than surface pressure
-    cond1 = df.Pressure.sub(
-        df.Pressure.iloc[df.Pressure.first_valid_index()]
-    ) <= -200
+    cond1 = df.Pressure.sub(df.Pressure.iloc[0]) <= -200
 
     # Ensure supersaturation
     cond2 = df.Temp - df.Dew_pt <= 1.0
@@ -132,7 +139,7 @@ def get_snow_layer(df):
 
 
 def predict_snowflake_shape(df):
-    prediction_line = df[0]
+    avg_temp = df["Temp"].mean()
     pass
 
 
